@@ -2061,7 +2061,7 @@ input-field round-in-box input#search {
 }
 
 .blue-grey.darken-1 {
-	background-color: #546e7a !important
+	background-color: #1A87C7 !important
 }
 
 .blue-grey-text.text-darken-1 {
@@ -6136,7 +6136,7 @@ ul.side-nav.fixed.right-aligned {
 
 ul.side-nav .collapsible-body li.active,
 ul.side-nav.fixed .collapsible-body li.active {
-	background-color: #546E7A
+	background-color: #1A87C7
 }
 
 ul.side-nav .collapsible-body li.active a,

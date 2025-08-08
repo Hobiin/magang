@@ -6,286 +6,254 @@
         die();
     } else {
 
+        // Ambil semua data yang diperlukan di awal
+        $id_surat = mysqli_real_escape_string($config, $_REQUEST['id_surat']);
+        $query_instansi = mysqli_query($config, "SELECT institusi, nama, alamat, logo FROM tbl_instansi");
+        list($institusi, $nama, $alamat, $logo) = mysqli_fetch_array($query_instansi);
+        $query_surat = mysqli_query($config, "SELECT * FROM tbl_surat_masuk WHERE id_surat='$id_surat'");
+
+        if(mysqli_num_rows($query_surat) > 0) {
+            $row = mysqli_fetch_array($query_surat);
+            $query_disp = mysqli_query($config, "SELECT * FROM tbl_disposisi WHERE id_surat='$id_surat'");
+            $row_disp = mysqli_num_rows($query_disp) > 0 ? mysqli_fetch_array($query_disp) : null;
+
+        // Mulai output HTML
         echo '
-        <style type="text/css">
-            table {
-                background: #fff;
-                padding: 5px;
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Cetak Lembar Disposisi</title>
+            <style type="text/css">
+            /* CSS Dasar */
+            body { font-family: Arial, sans-serif; }
+            table { background: #fff; border-collapse: collapse; width: 100%;}
+            tr, td { border: 1px solid #444; padding: 5px; vertical-align: top;}
+            td label { color: black !important; cursor: pointer;}
+            [type="checkbox"]:not(:checked)+label:before { border: 2px solid black !important; }
+            [type="checkbox"]:checked+label:before { border-right: 2px solid black !important; border-bottom: 2px solid black !important; }
+            .tgh { text-align: center; }
+
+            .dispo-row {
+                display: flex;
+                align-items: flex-start;
             }
-            tr, td {
-                border: table-cell;
-                border: 1px  solid #444;
+            .dispo-label {
+                width: 140px;
+                flex-shrink: 0;
             }
-            tr,td {
-                vertical-align: top!important;
+            .dispo-data {
+                flex-grow: 1;
             }
-            #right {
+
+            /* Hapus garis vertikal */
+            .no-vertical-border {
+                border-left: none !important;
                 border-right: none !important;
             }
-            #left {
-                border-left: none !important;
+
+            /* PENGATURAN WRAPPER UTAMA MENGGUNAKAN MARGIN */
+            .lembar-wrapper {
+                margin: 1.8cm 0cm 0.9cm 0cm; /* Format: Atas, Kanan, Bawah, Kiri */
+                box-sizing: border-box;
+                overflow: hidden;
             }
-            .isi {
-                height: 300px!important;
-            }
+            
+            /* PENGATURAN KOP SURAT */
             .disp {
-                text-align: center;
-                padding: 1.5rem 0;
-                margin-bottom: .5rem;
+                display: flex;
+                align-items: center;
+                gap: 10px;
             }
             .logodisp {
-                float: left;
-                position: relative;
-                width: 125px;
-                height: 130px;
-                margin: 0 0 0 1rem;
+                width: 90px;
+                height: auto;
+                flex-shrink: 0;
             }
-            #lead {
-                width: auto;
-                position: relative;
-                margin: 25px 0 0 75%;
-            }
-            .lead {
-                font-weight: bold;
-                text-decoration: underline;
-                margin-bottom: -10px;
-            }
-            .tgh {
+            .kop-text {
+                flex-grow: 1;
                 text-align: center;
             }
-            #nama {
-                font-size: 2.1rem;
-                margin-bottom: -1rem;
-				font-weight: bold;
-            }
-            #alamat {
-                font-size: 16px;
-            }
-            .up {
-                text-transform: uppercase;
-                margin: 0;
-                line-height: 2.2rem;
-                font-size: 1.5rem;
-            }
-            .status {
-                margin: 0;
-                font-size: 1.3rem;
-                margin-bottom: .5rem;
-            }
-            #lbr {
-                font-size: 20px;
+            .up { 
+                text-transform: uppercase; 
+                margin: 0; 
                 font-weight: bold;
+                line-height: 1.1;
             }
-            .separator {
-                border-bottom: 2px solid #616161;
-                margin: -1.3rem 0 1.5rem;
+
+            #nama { 
+                font-size: 16.3px; 
+                line-height: 1; 
+                margin: 0; 
             }
-            @media print{
+            .institusi { 
+                font-size: 17.5px; 
+                line-height: 1; 
+                margin: 0;
+            }
+            #alamat { 
+                font-size: 12.2px; 
+                line-height: 1.2; 
+                margin: 0;
+                display: block;
+            }
+            
+            .separator { border-bottom: 2px solid #616161; margin: 0.4rem 0; }
+
+            #lbr {
+                font-size: 16px;
+                font-weight: bold;
+                padding: 5px 0 !important;
+            }
+            .bordered td {
+                font-size: 14px;
+            }
+            .isi td label {
+                font-size: 15px !important;
+            }
+
+            .isi { height: 200px !important; } 
+
+            /* --- PENGATURAN KHUSUS UNTUK PRINT --- */
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            @media print {
                 body {
-                    font-size: 12px;
-                    color: #212121;
+                    margin: 0;
+                    font-size: 11.5pt; 
                 }
-                nav {
-                    display: none;
-                }
-                table {
-                    width: 100%;
-                    font-size: 12px;
-                    color: #212121;
-                }
-                tr, td {
-                    border: table-cell;
-                    border: 1px  solid #444;
-                    padding: 8px!important;
-
-                }
-                tr,td {
-                    vertical-align: top!important;
-                }
-                #lbr {
-                    font-size: 20px;
-                }
-                .isi {
-                    height: 200px!important;
-                }
-                .tgh {
-                    text-align: center;
-                }
-                .disp {
-                    text-align: center;
-                    margin: -.5rem 0;
-                }
-                .logodisp {
-                    float: left;
-                    position: relative;
-                    width: 105px;
-                    height: 105px;
-                    margin: .5rem 0 0 .5rem;
-                }
-                #lead {
-                    width: auto;
-                    position: relative;
-                    margin: 15px 0 0 75%;
-                }
-                .lead {
-                    font-weight: bold;
-                    text-decoration: underline;
-                    margin-bottom: -10px;
-                }
-                #nama {
-                    font-size: 20px!important;
-                    font-weight: bold;
-                    text-transform: uppercase;
-                    margin: -10px 0 -20px 0;
-                }
-                .up {
-                    font-size: 19px!important;
-                    font-weight: bold;
-                }
-                .status {
-                    font-size: 17px!important;
-                    font-weight: normal;
-                    margin-bottom: -.1rem;
-                }
-                #alamat {
-                    margin-top: -15px;
-                    font-size: 13px;
-					text-align: center;
-                }
-                #lbr {
-                    font-size: 17px;
-                    font-weight: bold;
-                }
-                .separator {
-                    border-bottom: 2px solid #616161;
-                    margin: -1rem 0 1rem;
-                }
-
+                .lembar-wrapper { height: auto; }
+                nav, .no-print { display: none; }
+                tr, td { padding: 2px 3px !important; } 
             }
-        </style>
 
-        <body onload="window.print()">
+            </style>
+        </head>
+        <body>';
 
-        <!-- Container START -->
-            <div id="colres">
-                <div class="disp">';
-                    $query2 = mysqli_query($config, "SELECT institusi, nama, alamat, logo FROM tbl_instansi");
-                    list($institusi, $nama, $alamat, $logo) = mysqli_fetch_array($query2);
-                        echo '<img class="logodisp" src="./upload/'.$logo.'"/>';
-                        echo '<h2 class="up">'.$institusi.'</h2>';
-                        echo '<h2 class="up" id="nama">'.$nama.'</h2><br/>';
-                        echo '<span id="alamat">Jln. Dr. Soedjono Lingkar Selatan Mataram Nusa Tenggara Barat</span><br>';
-						echo '<span id="alamat">Telp :(0370)6177418 Fax : (0370)6177413</span><br>';
-						echo '<span id="email">Email : bnnpntb@gmail.com</span>';
-                    echo '
+        // Fungsi untuk menampilkan satu lembar disposisi
+        function render_disposition_sheet($row, $row_disp, $institusi, $nama, $logo) {
+            echo '<div class="lembar-wrapper">';
+            
+            // KOP SURAT (Tidak ada perubahan)
+            echo '
+            <div class="disp">
+                <img class="logodisp" src="./upload/'.$logo.'"/>
+                <div class="kop-text">
+                    <h2 class="up institusi">'.htmlspecialchars($institusi).'</h2>
+                    <h2 class="up" id="nama">'.htmlspecialchars($nama).'</h2>
+                    <span id="alamat">Jln. Dr. Soedjono Lingkar Selatan Mataram NTB<br> Telp:(0370)6177418 Fax:(0370)6177413 <br> Email:bnnpntb@gmail.com</span>
                 </div>
-                <div class="separator"></div>';
+            </div>
+            <div class="separator"></div>';
+            
+            // TABEL ISI
+            echo '
+            <table class="bordered">
+                <tbody>
+                    <tr><td class="tgh" id="lbr" colspan="3">LEMBAR DISPOSISI</td></tr>
+                    
+                    <tr>
+                        <td>
+                            <div class="dispo-row">
+                                <div class="dispo-label"><strong>Nomor Agenda</strong></div>
+                                <div class="dispo-data">: '.htmlspecialchars($row['no_agenda']).'</div>
+                            </div>
+                        </td>
+                        <td colspan="2">
+                            <div class="dispo-row">
+                                <div class="dispo-label"><strong>Tingkat Keamanan</strong></div>
+                                <div class="dispo-data">: SR / R / B</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="dispo-row">
+                                <div class="dispo-label"><strong>Tgl. Terima</strong></div>
+                                <div class="dispo-data">: '.date('d-m-Y', strtotime($row['tgl_diterima'])).'</div>
+                            </div>
+                        </td>
+                        <td colspan="2">
+                            <div class="dispo-row">
+                                <div class="dispo-label"><strong>Klasifikasi Surat</strong></div>
+                                <div class="dispo-data">: </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <div class="dispo-row">
+                                <div class="dispo-label"><strong>Nomor Surat</strong></div>
+                                <div class="dispo-data">: '.htmlspecialchars($row['no_surat']).'</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <div class="dispo-row">
+                                <div class="dispo-label"><strong>Dari</strong></div>
+                                <div class="dispo-data">: '.htmlspecialchars($row['asal_surat']).'</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <div class="dispo-row">
+                                <div class="dispo-label"><strong>Perihal</strong></div>
+                                <div class="dispo-data">: '.htmlspecialchars($row['isi']).'</div>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="tgh" style="width: 45%;"><strong>Isi Disposisi</strong></td>
+                        <td class="tgh" style="width: 40%;"><strong>Diteruskan kepada</strong></td>
+                        <td class="tgh" style="width: 15%;"><strong>Paraf</strong></td>
+                    </tr>';
+        
+            if($row_disp){
+                echo '<tr class="isi">
+                        <td>'.htmlspecialchars($row_disp['isi_disposisi']).'</td>
+                        <td>'.htmlspecialchars($row_disp['tujuan']).'</td>
+                        <td></td>
+                    </tr>';
+            } else {
+                // PERBAIKAN DI BLOK INI: Memecah colspan="2" menjadi dua <td> terpisah
+                echo '<tr class="isi">
+                        <td></td>
+                        <td style="line-height: 1.6; padding: 8px !important;">
+                            <input type="checkbox" id="kabag_umum" name="tujuan[]" value="Kabag Umum"><label for="kabag_umum">Kabag Umum</label><br>
+                            <input type="checkbox" id="berantas" name="tujuan[]" value="Kabid Pemberantasan"><label for="berantas">Kabid Pemberantasan</label><br>
+                            <input type="checkbox" id="p2m" name="tujuan[]" value="Katim P2M"><label for="p2m">Katim P2M</label><br>
+                            <input type="checkbox" id="rehab" name="tujuan[]" value="Katim Rehabilitasi"><label for="rehab">Katim Rehabilitasi</label><br>
+                            <input type="checkbox" id="ppk" name="tujuan[]" value="PPK"><label for="ppk">PPK</label><br>
+                            <input type="checkbox" id="bendahara" name="tujuan[]" value="Bendahara"><label for="bendahara">Bendahara Pengeluaran</label><br>
+                            <input type="checkbox" id="jf" name="tujuan[]" value="JF"><label for="jf">JF ______________</label><br>
+                        </td>
+                        <td></td>
+                    </tr>';
+            }
+            echo '</tbody></table>';
+            echo '</div>';
+        }
 
-                $id_surat = mysqli_real_escape_string($config, $_REQUEST['id_surat']);
-                $query = mysqli_query($config, "SELECT * FROM tbl_surat_masuk WHERE id_surat='$id_surat'");
+        // Panggil fungsi render hanya satu kali
+        render_disposition_sheet($row, $row_disp, $institusi, $nama, $logo);
 
-                if(mysqli_num_rows($query) > 0){
-                $no = 0;
-                while($row = mysqli_fetch_array($query)){
+        // Tombol Cetak
+        echo '
+        <div class="no-print" style="text-align: center; padding: 10px;">
+            <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px;">
+                🖨️ Cetak Lembar Disposisi
+            </button>
+        </div>
+        </body>
+        </html>';
 
-                echo '
-                    <table class="bordered" id="tbl">
-                        <tbody>
-                            <tr>
-                                <td class="tgh" id="lbr" colspan="10">LEMBAR DISPOSISI</td>
-                            </tr>
-                            <tr>
-                                <td id="right" width="20%"><strong>Nomor Agenda</strong></td>
-                                <td id="left" style="border-right: none;">: '.$row['no_agenda'].'</td>
-                                <td id="right" width="25%"><strong>Tingkat Keamanan</strong></td>
-								<td id="left" style="border-right: none;" colspan="6">:  SR / R / B</td>
-                            </tr>
-                            <tr>
-								<td id="right" width="22%"><strong>Tanggal Penerimaan</strong></td>
-								<td id="left" style="border-right: none;">: '.$row['tgl_surat'].'</td>
-                                <td id="right" width="25%"><strong>Tgl Penyelesaian</strong></td>
-								<td id="left" style="border-right: none;" colspan="6">:</td>
-                            </tr>
-                            <tr>
-                                <td id="right" width="30%"><strong>Tanggal dan Nomor surat</strong></td>
-                                <td id="left" colspan="8">: '.$row['no_surat'].'</td>
-                            </tr>
-                            <tr>
-                                <td id="right"><strong>Dari</strong></td>
-                                <td id="left" colspan="8">: '.$row['asal_surat'].'</td>
-                            </tr>
-                            <tr>
-                                <td id="right"><strong>Ringkasan Isi</strong></td>
-								<td id="left" colspan="8">: '.$row['isi'].'</td>
-							</tr>
-							<tr>
-                                <td id="right"><strong>Lampiran</strong></td>
-								<td id="left" colspan="8">: '.$row['indeks'].'</td>
-                            </tr>
-                            <tr>
-                                <td id="right"><strong><center>Disposisi</center></strong></td>
-                                <td id="left" colspan="1"></td>
-								<td id="right"><strong><center>Diteruskan kepada</center></strong></td>
-                                <td id="left" colspan="3"></td>
-								<td><strong><center>Paraf</center></strong></td>
-                            </tr>
-                            <tr>';
-                            $query3 = mysqli_query($config, "SELECT * FROM tbl_disposisi JOIN tbl_surat_masuk ON tbl_disposisi.id_surat = tbl_surat_masuk.id_surat WHERE tbl_disposisi.id_surat='$id_surat'");
-
-                            if(mysqli_num_rows($query3) > 0){
-                                $no = 0;
-                                $row = mysqli_fetch_array($query3);{
-                                echo '
-                            <tr class="isi">
-                                <td colspan="2">
-                                    <strong>Isi Disposisi :</strong><br/>'.$row['isi_disposisi'].'
-                                </td>
-                            </tr>';
-                                }
-                            } else {
-                                echo '
-                                <tr class="isi">
-                                    <td colspan="2"><strong></strong></td>
-                                    <td colspan="4">
-
-                                    <li><b>Kabag Umum</b></li>
-                                    <ol type="a">
-                                        <li>Kasubag Admin</li>
-                                        <li>Kasubag Perencanaan</li>
-                                        <li>Kasubag Sarpas</li>
-                                        <li>Bendahara</li>
-										<li>Humas</li>
-                                    </ol>
-
-                                    <li><b>Kabid P2M</b></li>
-                                    <ol type="a">
-                                        <li>Kasi Pencegahan</li>
-                                        <li>Kasi Dayamas</li>
-                                    </ol>
-
-                                    <li><b>Kabid Rehabilitas</b></li>
-                                     <ol type="a">
-                                        <li>Kasi PLR</li>
-                                        <li>Kasi Pasca Rehab</li>
-                                    </ol>
-
-                                    <li><b>Kabid Pemberantasan</b></li>
-                                     <ol type="a">
-                                        <li>Kasi Intelijen</li>
-                                        <li>Kasi Penyidikan</li>
-                                        <li>Kasi Wastati</li>
-                                    </ol>
-                                    <strong></strong></td>
-
-                                    <td colspan="2"><strong></strong></td>
-                                </tr>';
-                            }
-                        } echo '
-                </tbody>
-            </table>
-    <!-- Container END -->
-
-    </body>';
+        } else {
+            echo 'Data surat dengan ID yang diminta tidak ditemukan.';
+        }
     }
-}
 ?>
